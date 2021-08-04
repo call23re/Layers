@@ -1,0 +1,11 @@
+# Project place file
+/Layers.rbxlx
+
+# Roblox Studio lock files
+/*.rbxlx.lock
+/*.rbxl.lock
+
+/src/Components/*.story.lua
+/src/Components/NumberInput.lua
+
+*.png

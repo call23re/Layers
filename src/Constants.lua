@@ -1,0 +1,3 @@
+return {
+	MaxLayers = 100
+}

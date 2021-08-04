@@ -1,0 +1,6 @@
+[submodule "vendor/StudioComponents"]
+	path = vendor/StudioComponents
+	url = https://github.com/sircfenner/StudioComponents
+[submodule "vendor/Roact"]
+	path = vendor/Roact
+	url = https://github.com/Roblox/roact

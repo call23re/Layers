@@ -1,0 +1,16 @@
+{
+	"name": "Layers",
+	"tree": {
+		"$className": "DataModel",
+		"ServerStorage": {
+			"$className": "ServerStorage",
+			"Layers": {
+				"$className": "Folder",
+				"Vendor": {
+					"$path": "vendor"
+				},
+				"$path": "src"
+			}
+		}
+	}
+}
