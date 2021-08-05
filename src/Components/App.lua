@@ -1,5 +1,3 @@
-local CollectionService = game:GetService("CollectionService")
-
 local Plugin = script.Parent.Parent
 local Constants = require(Plugin.Constants)
 local Layers = require(Plugin.Layers)
@@ -87,7 +85,7 @@ function App:init()
 	end
 
 	self.updateSelection = function()
-		local children = self.state.Layers[self.state.SelectedLayerId].children
+		local children = Layers.Layers[self.state.SelectedLayerId].children
 		local parts = {}
 
 		for _, child in pairs(children) do
