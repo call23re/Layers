@@ -93,7 +93,9 @@ function App:init()
 		--Layers.updateSelection(self.state.SelectedLayerId)
 		local objects = {}
 		for instance, _ in pairs(Layers.Stack[self.state.SelectedLayerId].Children) do
-			table.insert(objects, instance)
+			if instance.Parent ~= nil then
+				table.insert(objects, instance)
+			end
 		end
 		Selection:Set(objects)
 		self:setState({ Layers = Layers.Stack })

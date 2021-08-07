@@ -56,22 +56,18 @@ function Layers:_UpdateChildren(layerId)
 	
 	if layer then
 		for instance, child in pairs(layer.Children) do
-			
-			if instance.Locked ~= layer.Properties.Locked then
-				child.Properties.Locked = instance.Locked
-			end
-			
+
 			if layer.Properties.Visible == false then
 				child.Properties.Transparency = instance.Transparency
-			end
-			
-			if instance.Anchored ~= layer.Properties.Visible then
-				child.Properties.Anchored = instance.Anchored
+			else
+				if instance.Transparency ~= 1 then
+					child.Properties.Transparency = instance.Transparency
+				end
 			end
 			
 			instance.Locked = layer.Properties.Locked 
 			instance.Transparency = (layer.Properties.Visible and child.Properties.Transparency or 1)
-			instance.Anchored = (layer.Properties.Visible and child.Properties.Anchored or true)
+			--instance.Anchored = (layer.Properties.Visible and child.Properties.Anchored or true)
 
 			self:_UpdateTag(child)
 		end
@@ -119,7 +115,7 @@ function Layers:AddChild(layerId, instance)
 		
 		instance.Locked = layer.Properties.Locked 
 		instance.Transparency = (layer.Properties.Visible and instance.Transparency or 1)
-		instance.Anchored = (layer.Properties.Visible and instance.Anchored or true)
+		--instance.Anchored = (layer.Properties.Visible and instance.Anchored or true)
 		
 		layer.Children[instance] = Child
 		self.Lookup[instance] = Child
@@ -150,7 +146,7 @@ function Layers:ResetChild(instance)
 	
 	if Child then
 		-- reset properties
-		instance.Anchored = Child.Properties.Anchored
+		--instance.Anchored = Child.Properties.Anchored
 		instance.Locked = Child.Properties.Locked
 		instance.Transparency = Child.Properties.Transparency
 		
@@ -293,7 +289,7 @@ function Layers:Init()
 
 		local sorted = {}
 		local correspondingTags = {}
-		local index = 0
+		local index = 1
 		for id, name in pairs(hashmap) do
 			index = index + 1
 			sorted[index] = name
@@ -312,6 +308,15 @@ function Layers:Init()
 		workspace.DescendantAdded:Connect(function(child)
 			if child:IsA("BasePart") then
 				self:AddChild(self.currentLayer, child)
+			end
+		end)
+
+		-- if destroyed parts aren't removed, you get weird Selection related issues
+		-- also keeping references to destroyed parts could potentially lead to memory leaks
+		workspace.DescendantRemoving:Connect(function(child)
+			if self.Lookup[child] then
+				self:RemoveChild(self.Lookup[child].Id, child)
+				self.Lookup[child] = nil
 			end
 		end)
 	end

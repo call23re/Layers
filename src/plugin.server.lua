@@ -31,11 +31,17 @@ settings().Studio.ThemeChanged:connect(function()
 end)
 
 
-plugin:CreatePluginAction("make_folder", "Make folder", "Group the selected parts into a Folder").Triggered:connect(function()
-	local f = Instance.new("Folder")
-	f.Parent = workspace
-	for _, o in pairs(Selection:Get()) do
-		o.Parent = f
+plugin:CreatePluginAction("make_folder", "Make Folder", "Group the selected parts into a Folder.").Triggered:Connect(function()
+	local currentSelection = Selection:Get()
+
+	if #currentSelection > 0 then
+		local folder = Instance.new("Folder")
+		folder.Parent = workspace
+
+		for _, object in pairs(currentSelection) do
+			object.Parent = folder
+		end
+
+		Selection:Set({folder})
 	end
-	Selection:Set({f})
 end)
