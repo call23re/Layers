@@ -85,13 +85,13 @@ function Item:render()
 				Font = Enum.Font.ArialBold,
 				Position = UDim2.new(0, 75, 0, 10),
 				Size = UDim2.new(1, -75, 0, 20),
-				Text = self.props.Layer.name,
+				Text = self.props.Layer.Name,
 				TextColor3 = theme:GetColor(Enum.StudioStyleGuideColor.MainText),
 				TextSize = 14,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextYAlignment = Enum.TextYAlignment.Top
 			}),
-			TransparencyLabel = Roact.createElement("TextLabel", {
+			--[[TransparencyLabel = Roact.createElement("TextLabel", {
 				BackgroundTransparency = 1,
 				Font = Enum.Font.Arial,
 				Position = UDim2.new(0, 75, 0, 30),
@@ -101,7 +101,7 @@ function Item:render()
 				TextSize = 14,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextYAlignment = Enum.TextYAlignment.Top
-			}),
+			}),]]
 			Visible = Roact.createElement("TextButton", {
 				AutoButtonColor = false,
 				BackgroundColor3 = theme:GetColor(color, modifier),

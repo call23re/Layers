@@ -71,8 +71,10 @@ function ScaleSlider:render()
 		Slider = Roact.createElement(Slider, {
 			Size = UDim2.new(0, 200, 0, 20),
 			LayoutOrder = 2,
-			value = self.state.value,
-			setValue = function(value)
+			Min = 0,
+			Max = 1,
+			Value = self.state.value,
+			OnChange = function(value)
 				local mult = 10^2
   				value = math.floor(value * mult + 0.5) / mult
 				self.updateValue(value)

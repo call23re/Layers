@@ -15,22 +15,22 @@ local function List(props)
 			children,
 			Roact.createElement(Item, {
 				Layer = layer,
-				SelectedLayer = (layer.id == props.SelectedLayerId),
-				Opacity = layer.transparency,
-				LayoutOrder = (Constants.MaxLayers - layer.id),
+				SelectedLayer = (layer.Id == props.SelectedLayerId),
+				Opacity = layer.Properties.Transparency,
+				LayoutOrder = (Constants.MaxLayers - layer.Id),
 				OnActivated = function()
 					if not props.Disabled then
-						props.SetSelectedLayerId(layer.id)
+						props.SetSelectedLayerId(layer.Id)
 					end
 				end,
 				OnVisibilityToggled = function()
 					if not props.Disabled then
-						props.ToggleVisibility(layer.id)
+						props.ToggleVisibility(layer.Id)
 					end
 				end,
 				OnLockToggled = function()
 					if not props.Disabled then
-						props.ToggleLock(layer.id)
+						props.ToggleLock(layer.Id)
 					end
 				end,
 				Disabled = props.Disabled

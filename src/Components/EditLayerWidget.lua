@@ -95,7 +95,7 @@ function LayerWidget:render()
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			TextColorStyle = Enum.StudioStyleGuideColor.ErrorText,
 		}),
-		Slider = Roact.createElement(ScaleSlider, {
+		--[[Slider = Roact.createElement(ScaleSlider, {
 			Position = UDim2.new(0, 0, 0, 54),
 			Title = "Transparency",
 			value = self.props.Transparency,
@@ -111,7 +111,7 @@ function LayerWidget:render()
 				self.setTransparency(self.state.StartTransparency)
 				self.props.OnReset()
 			end
-		}),
+		}),]]
 		Buttons = Roact.createElement("Frame", {
 			AnchorPoint = Vector2.new(0, 1),
 			Position = UDim2.fromScale(0, 1),
@@ -130,7 +130,7 @@ function LayerWidget:render()
 				Text = "Save",
 				Disabled = not valid,
 				OnActivated = function()
-					self.props.OnSubmitted({ name = lastText })
+					self.props.OnSubmitted({ Name = lastText })
 				end,
 			}),
 			CancelButton = Roact.createElement(Button, {

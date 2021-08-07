@@ -9,13 +9,13 @@ Add layers with the **"+"** button. Remove them with the **trash / bin** button.
 
 Each layer has an **eye** button and a **lock** button. The eye button toggles visiblity. The lock button toggles the "Locked" property of every part in the layer.
 
-The **Edit** button opens the edit widget. The edit widget has two fields, "Name" and "Transparency".
+The **Edit** button opens the edit widget, which allows you to change the name of the selected layer.
 
 The **Move** button moves all of the parts in the current selection in to the currently selected layer.
 
 The **Select All** button selects all of the parts in the currently selected layer.
 
-The plugin adds a [PluginAction](https://developer.roblox.com/en-us/api-reference/class/PluginAction) for creating folders. To set up a keybind, go to File -> Advanced -> Customize Shortcuts, and search "make folder". I recommend overwriting ctrl + f.
+The plugin adds a [PluginAction](https://developer.roblox.com/en-us/api-reference/class/PluginAction) for creating folders. To set up a keybind, go to File -> Advanced -> Customize Shortcuts, and search "make folder". I recommend overwriting ctrl + g.
 
 Plugin has support for both dark and light themes.
 

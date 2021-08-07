@@ -1,3 +1,5 @@
+local Selection = game:GetService("Selection")
+
 local Plugin = script.Parent.Parent
 local Constants = require(Plugin.Constants)
 local Layers = require(Plugin.Layers)
@@ -18,7 +20,7 @@ local App = Roact.Component:extend("App")
 function App:init()
 
 	self:setState({
-		Layers = Layers.Layers,
+		Layers = Layers.Stack,
 		SelectedLayerId = 1,
 		CreatingLayer = false,
 		EditingLayer = false,
@@ -27,28 +29,28 @@ function App:init()
 	})
 
 	self.batchSetLayer = function(instances, id)
-		Layers.addChildren(id, instances)
+		Layers:AddChildren(id, instances)
 		self:update(id)
-		self:setState({ Layers = Layers.Layers })
+		self:setState({ Layers = Layers.Stack })
 	end
 
 	self.setLayer = function(instance, id)
-		Layers.addChild(id, instance)
+		Layers:AddChild(id, instance)
 		self:update(id)
-		self:setState({ Layers = Layers.Layers })
+		self:setState({ Layers = Layers.Stack })
 	end
 
 	self.removeFromLayer = function(instance, id)
-		Layers.removeChild(id, instance)
+		Layers:RemoveChild(id, instance)
 		self:update(id)
-		self:setState({ Layers = Layers.Layers})
+		self:setState({ Layers = Layers.Stack})
 	end
 
 	self.createLayer = function(name)
-		local res = Layers.addLayer(name)
+		local res = Layers:New(name)
 		if res then
 			self:update(res)
-			self:setState({ Layers = Layers.Layers })
+			self:setState({ Layers = Layers.Stack })
 			if res == Constants.MaxLayers then
 				self:setState({ MaxLayers = true })
 			end
@@ -58,16 +60,19 @@ function App:init()
 	end
 
 	self.editLayer = function(id, newProperties)
-		Layers.editLayer(id, newProperties)
+		if newProperties.transparency then
+			newProperties.transparency = nil
+		end
+		Layers:Edit(id, newProperties)
 	end
 
 	self.deleteLayer = function(id)
-		local res = Layers.removeLayer(id)
+		local res = Layers:Remove(id)
 		if res then
 			self:update(res)
 			self:setState({
 				MaxLayers = false,
-				Layers = Layers.Layers
+				Layers = Layers.Stack
 			})
 		else
 			warn(("Id %s does not exist."):format(id)) -- this should never happen anyway
@@ -75,37 +80,36 @@ function App:init()
 	end
 
 	self.toggleVisibility = function(id)
-		Layers.toggleVisibility(id)
-		self:setState({ Layers = Layers.Layers })
+		Layers:ToggleProperty(id, "Visible")
+		self:setState({ Layers = Layers.Stack })
 	end
 
 	self.toggleLock = function(id)
-		Layers.toggleLock(id)
-		self:setState({ Layers = Layers.Layers })
+		Layers:ToggleProperty(id, "Locked")
+		self:setState({ Layers = Layers.Stack })
 	end
 
 	self.updateSelection = function()
-		local children = Layers.Layers[self.state.SelectedLayerId].children
-		local parts = {}
-
-		for _, child in pairs(children) do
-			table.insert(parts, child.part)
+		--Layers.updateSelection(self.state.SelectedLayerId)
+		local objects = {}
+		for instance, _ in pairs(Layers.Stack[self.state.SelectedLayerId].Children) do
+			table.insert(objects, instance)
 		end
-
-		game.Selection:Set(parts)
+		Selection:Set(objects)
+		self:setState({ Layers = Layers.Stack })
 	end
 
 end
 
 function App:update(id)
 	self:setState({SelectedLayerId = id})
-	Layers.setCurrentLayer(id)
+	Layers:SetCurrentLayer(id)
 end
 
 function App:render()
 	local isModalActive = self.state.CreatingLayer or self.state.DeletingLayer
-	local selectedLayerName = self.state.Layers[self.state.SelectedLayerId].name
-	local selectedLayerTransparency = self.state.Layers[self.state.SelectedLayerId].transparency
+	local selectedLayerName = Layers.Stack[self.state.SelectedLayerId].Name
+	local selectedLayerTransparency = Layers.Stack[self.state.SelectedLayerId].Properties.Transparency
 
 	return Roact.createFragment({
 		CreateWidget = self.state.CreatingLayer and Roact.createElement(CreateLayerWidget, {
@@ -137,7 +141,7 @@ function App:render()
 			Transparency = selectedLayerTransparency,
 			OnClosed = function()
 				self:setState({ EditingLayer = false })
-				Layers.resetTransparency(self.state.SelectedLayerId)
+				--Layers.resetTransparency(self.state.SelectedLayerId)
 				self:update()
 			end,
 			OnUpdate = function(properties)
@@ -145,7 +149,7 @@ function App:render()
 				self:update()
 			end,
 			OnReset = function()
-				Layers.resetTransparency(self.state.SelectedLayerId)
+				--Layers.resetTransparency(self.state.SelectedLayerId)
 			end,
 			OnSubmitted = function(properties)
 				self.editLayer(self.state.SelectedLayerId, properties)
@@ -237,7 +241,7 @@ function App:render()
 					Size = UDim2.new(0.3, -18, 1, 0),
 					Text = "Edit",
 					OnActivated = function()
-						Layers.saveTransparency(self.state.SelectedLayerId)
+						--Layers.saveTransparency(self.state.SelectedLayerId)
 						self:setState({ EditingLayer = true })
 					end,
 					Disabled = isModalActive

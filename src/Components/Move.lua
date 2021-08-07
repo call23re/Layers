@@ -25,7 +25,7 @@ function Move:init()
 end
 
 function Move:didMount()
-	self.selectionChanged = SelectionService.SelectionChanged:connect(function()
+	self.selectionChanged = SelectionService.SelectionChanged:Connect(function()
 		self:setState({ Selection = SelectionService:Get() })
 	end)
 end

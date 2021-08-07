@@ -2,8 +2,11 @@ local Selection = game:GetService("Selection")
 
 local Plugin = script.Parent
 
+local Layers = require(script.Parent.Layers)
 local Roact = require(Plugin.Vendor.Roact)
 local MainPlugin = require(Plugin.Components.MainPlugin)
+
+Layers:Init()
 
 local toolbar = plugin:CreateToolbar("Layers")
 local button = toolbar:CreateButton(

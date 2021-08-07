@@ -1,279 +1,320 @@
-local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
 
 local Constants = require(script.Parent.Constants)
 
-local Layers = {}
-local lookup = {}
+local MAX_LAYERS = Constants.MaxLayers
+local TAG_FORMAT = "_layer_%s_%s"
 
-local numLayers = 0
-local maxLayers = Constants.MaxLayers
-local currentLayer = 1
-
-local function setCurrentLayer(id)
-	currentLayer = id
-end
-
-local function removeChild(child)
-	if typeof(child) ~= "table" then
-		child = lookup[child]
-	end
-
-	local layer = Layers[child.id]
-
-	pcall(function()
-		CollectionService:RemoveTag(child.part, "_layered")
-		CollectionService:RemoveTag(child.part, string.format("_layer_%s_%s", child.id, layer.name))
-		child.part.Transparency = child.transparency
-		child.part.Locked = child.locked
-	end)
-
-	Layers[child.id].children[child.part] = nil
-	lookup[child.part] = nil
-end
-
-local function addChild(id, child)
-	local layer = Layers[id]
-	if layer then
-		if lookup[child] then
-			removeChild(child)
-		end
-
-		local tags = CollectionService:GetTags(child)
-		for _, tag in pairs(tags) do
-			if tag:find("layer_") then
-				CollectionService:RemoveTag(child, tag)
-			end
-		end
-
-		CollectionService:AddTag(child, "_layered")
-		CollectionService:AddTag(child, string.format("_layer_%s_%s", id, layer.name))
-		layer.children[child] = {id = id, part = child, transparency = child.Transparency, locked = child.Locked}
-		--child.Transparency = layer.transparency
-		--child.Locked = layer.Locked
-		lookup[child] = layer.children[child]
-	end
-end
-
-local function addChildren(id, children)
-	if Layers[id] then
-		for _, child in pairs(children) do
-			addChild(id, typeof(child) == "table" and child.part or child)
-		end
-	end
-end
-
-local function removeChildren(children)
-	for _, child in pairs(children) do
-		removeChild(child)
-	end
-end
-
-local function update()
-	for i, v in pairs(Layers) do
-		v.id = i
-	end
-	numLayers = #Layers
-end
-
-local function addLayer(name)
-
-	if numLayers + 1 > maxLayers then
-		return false
-	end
-
-	if not name then
-		name = numLayers + 1
-	end
-
-	numLayers = numLayers + 1
-
-	local data = {
-		id = numLayers,
-		name = name,
-		visible = true,
-		locked = false,
-		transparency = 0,
-		children = {}
-	}
-
-	Layers[numLayers] = data
-
-	return numLayers
-
-end
-
-local function updateTransparency(id)
-	--ChangeHistoryService:SetWaypoint(string.format("PreUpdateTransparency%s%s", id, math.random()))
-	local layer = Layers[id]
-	if layer then
-		for _, child in pairs(layer.children) do
-			child.part.Transparency = layer.transparency
-		end
-	end
-	--ChangeHistoryService:SetWaypoint(string.format("PostUpdateTransparency%s%s", id, math.random()))
-end
-
-local function saveTransparency(id)
-	local layer = Layers[id]
-	if layer then
-		for _, child in pairs(layer.children) do
-			child.transparency = child.part.Transparency
-		end
-	end
-end
-
-local function resetTransparency(id)
-	local layer = Layers[id]
-	if layer then
-		for _, child in pairs(layer.children) do
-			child.part.Transparency = child.transparency
-		end
-		layer.transparency = 0
-	end
-end
-
-local function editLayer(id, newProperties)
-	local layer = Layers[id]
-
-	if layer then
-		for key, value in pairs(newProperties) do
-			layer[key] = value
-		end
-
-		if newProperties.name then
-			addChildren(id, layer.children)
-		end
-	end
-
-	if newProperties.transparency then
-		updateTransparency(id)
-	end
-end
-
-local function toggleVisibility(id)
-	local layer = Layers[id]
-	if layer then
-		layer.visible = not layer.visible
-		if layer.visible then
-			for _, child in pairs(layer.children) do
-				if child.part:IsA("BasePart") then
-					-- if the transparency was manually changed since it was set to invisible, set its new default transparency to its current transparency
-					if child.part.Transparency ~= 1 and child.part.Transparency ~= child.transparency then
-						child.transparency = child.part.Transparency
-					end
-					child.part.Transparency = child.transparency
-				end
-			end
-		else
-			for _, child in pairs(layer.children) do
-				if child.part:IsA("BasePart") then
-					child.transparency = child.part.Transparency
-					child.part.Transparency = 1
-				end
-			end
-		end
-	end
-end
-
-local function toggleLock(id)
-	local layer = Layers[id]
-	if layer then
-		layer.locked = not layer.locked
-		if not layer.locked then
-			for _, child in pairs(layer.children) do
-				if child.part:IsA("BasePart") then
-					child.part.Locked = child.locked
-				end
-			end
-		else
-			for _, child in pairs(layer.children) do
-				if child.part:IsA("BasePart") then
-					child.locked = child.part.Locked
-					child.part.Locked = true
-				end
-			end
-		end
-	end
-end
-
-local function removeLayer(id)
-
-	if numLayers - 1 == 0 then
-		return false
-	end
-
-	if Layers[id] then
-		local copy = {}
-
-		for _, child in pairs(Layers[id].children) do
-			table.insert(copy, child.part)
-		end
-
-		removeChildren(Layers[id].children)
-		table.remove(Layers, id)
-		update()
-		addChildren(1, copy)
-		return numLayers
-	end
-
-	return false
-end
-
--- init
-if RunService:IsEdit() then
-	addLayer("Default")
-
-	local tagged = CollectionService:GetTagged("_layered")
-	local sorted = {}
-	local correspondingTags = {}
-
-	for _, object in pairs(tagged) do
-		local tags = CollectionService:GetTags(object)
-		for _, tag in pairs(tags) do
-			if tag:find("layer_") then
-				local data = tag:split("_")
-				local id = tonumber(data[3])
-				local name = data[4]
-				sorted[id] = name
-				if not correspondingTags[id] then
-					correspondingTags[id] = {object}
-				else
-					table.insert(correspondingTags[id], object)
-				end
-			end
-		end
-	end
-
-	for id, name in pairs(sorted) do
-		if id > 1 and id <= maxLayers then
-			addLayer(name)
-		end
-
-		local children = correspondingTags[id]
-		addChildren(id, children)
-	end
-
-	workspace.DescendantAdded:connect(function(child)
-		if child:IsA("BasePart") then
-			addChild(currentLayer, child)
-		end
-	end)
-end
-
-return {
-	Layers = Layers,
-	setCurrentLayer = setCurrentLayer,
-	addLayer = addLayer,
-	removeLayer = removeLayer,
-	editLayer = editLayer,
-	addChild = addChild,
-	removeChild = removeChild,
-	addChildren = addChildren,
-	removeChildren = removeChildren,
-	toggleVisibility = toggleVisibility,
-	toggleLock = toggleLock,
-	saveTransparency = saveTransparency,
-	resetTransparency = resetTransparency
+local Layers = {
+	Stack = {},
+	Lookup = {},
+	numberLayers = 0,
+	currentLayer = 0
 }
+
+-- Private
+function Layers:_UpdateStack()
+	for index, layer in pairs(self.Stack) do
+		layer.Id = index
+		for _, child in pairs(layer.Children) do
+			self:AddChild(index, child.Part)
+		end
+	end
+	
+	self.numberLayers = #self.Stack
+	self.currentLayer = #self.Stack
+end
+
+function Layers:_SaveChildren(layerId)
+	local layer = self.Stack[layerId]
+
+	if layer then
+		for instance, child in pairs(layer) do
+			child.Properties.Anchored = instance.Anchored
+			child.Properties.Locked = instance.Locked
+			child.Properties.Transparency = instance.Transparency
+		end
+	end
+end
+
+function Layers:_UpdateTag(child)
+	local layer = self.Stack[child.Id]
+
+	for _, tag in pairs(CollectionService:GetTags(child.Part)) do
+		if tag:find("_layer") then
+			CollectionService:RemoveTag(child.Part, tag)
+		end
+	end
+
+	CollectionService:AddTag(child.Part, "_layered")
+	CollectionService:AddTag(child.Part, TAG_FORMAT:format(layer.Id, layer.Name))
+end
+
+function Layers:_UpdateChildren(layerId)
+	local layer = self.Stack[layerId]
+	
+	if layer then
+		for instance, child in pairs(layer.Children) do
+			
+			if instance.Locked ~= layer.Properties.Locked then
+				child.Properties.Locked = instance.Locked
+			end
+			
+			if layer.Properties.Visible == false then
+				child.Properties.Transparency = instance.Transparency
+			end
+			
+			if instance.Anchored ~= layer.Properties.Visible then
+				child.Properties.Anchored = instance.Anchored
+			end
+			
+			instance.Locked = layer.Properties.Locked 
+			instance.Transparency = (layer.Properties.Visible and child.Properties.Transparency or 1)
+			instance.Anchored = (layer.Properties.Visible and child.Properties.Anchored or true)
+
+			self:_UpdateTag(child)
+		end
+	end
+end
+
+function Layers:_GetProperties(instance)
+	local match = {"Anchored", "Locked", "Transparency"}
+	local properties = {}
+	
+	for _, property in pairs(match) do
+		properties[property] = instance[property]
+	end
+	
+	return properties
+end
+
+-- Public
+function Layers:AddChild(layerId, instance)
+	
+	-- only parts _for now_
+	if not instance:IsA("BasePart") then
+		return false
+	end
+	
+	local layer = self.Stack[layerId]
+	
+	if layer then
+		
+		-- sanitize the instance
+		if self.Lookup[instance] then
+			self:RemoveChild(self.Lookup[instance].Id, instance)
+		else
+			self:ResetChild(instance)
+		end
+		
+		local Child = {
+			Id = layerId,
+			Part = instance,
+			Properties = self:_GetProperties(instance)
+		}
+		
+		CollectionService:AddTag(instance, "_layered")
+		CollectionService:AddTag(instance, TAG_FORMAT:format(layerId, layer.Name))
+		
+		instance.Locked = layer.Properties.Locked 
+		instance.Transparency = (layer.Properties.Visible and instance.Transparency or 1)
+		instance.Anchored = (layer.Properties.Visible and instance.Anchored or true)
+		
+		layer.Children[instance] = Child
+		self.Lookup[instance] = Child
+
+		return self.numberLayers
+		
+	end
+end
+
+function Layers:RemoveChild(layerId, instance)
+	local layer = self.Stack[layerId]
+	
+	if layer then
+		self:ResetChild(instance)
+		layer.Children[instance] = nil
+	end
+end
+
+function Layers:ResetChild(instance)
+	-- remove tags
+	for _, tag in pairs(CollectionService:GetTags(instance)) do
+		if tag:find("_layer") then
+			CollectionService:RemoveTag(instance, tag)
+		end
+	end
+
+	local Child = self.Lookup[instance]
+	
+	if Child then
+		-- reset properties
+		instance.Anchored = Child.Properties.Anchored
+		instance.Locked = Child.Properties.Locked
+		instance.Transparency = Child.Properties.Transparency
+		
+		-- remove lookup
+		self.Lookup[instance] = nil
+	end
+end
+
+function Layers:AddChildren(layerId, children)
+	local layer = self.Stack[layerId]
+
+	if layer then
+		for _, instance in pairs(children) do
+			self:AddChild(layerId, instance)
+		end
+	end
+end
+
+function Layers:New(name)
+	
+	if self.numberLayers + 1 > MAX_LAYERS then
+		return false
+	end
+	
+	self.numberLayers = self.numberLayers + 1
+	self.currentLayer = self.currentLayer + 1
+	
+	if not name then
+		name = "Layer " .. self.numberLayers
+	end
+	
+	local Layer = {
+		Id = self.numberLayers,
+		Name = name,
+		Properties = {
+			Visible = true,
+			Locked = false
+		},
+		Children = {}
+	}
+	
+	table.insert(self.Stack, Layer)
+	
+	return self.currentLayer
+	
+end
+
+function Layers:Edit(layerId, newProperties)
+	local layer = self.Stack[layerId]
+	
+	if layer then
+
+		if newProperties["Name"] then
+			layer.Name = newProperties.Name
+		end
+
+		for key, value in pairs(newProperties) do
+			if layer.Properties[key] then
+				layer.Properties[key] = value
+			end
+		end
+
+		self:_UpdateChildren(layerId)
+	end
+end
+
+function Layers:ToggleProperty(layerId, property)
+	local layer = self.Stack[layerId]
+	
+	if layer then
+		layer.Properties[property] = not layer.Properties[property]
+		self:_UpdateChildren(layerId)
+	end
+end
+
+function Layers:Remove(layerId)
+	
+	if self.numberLayers - 1 == 0 then
+		return false
+	end
+	
+	local layer = self.Stack[layerId]
+	if layer then
+		
+		-- move children to the default layer
+		for instance, child in pairs(layer.Children) do
+			self:AddChild(1, instance)
+		end
+		
+		-- remove the layer
+		table.remove(self.Stack, layerId)
+		
+		-- update the stack
+		self:_UpdateStack()
+
+		return self.currentLayer
+
+	end
+	
+end
+
+function Layers:SetCurrentLayer(layerId)
+	if self.Stack[layerId] then
+		self.currentLayer = layerId
+	end
+end
+
+function Layers:Init()
+	if RunService:IsEdit() then
+		self:New("Default")
+
+		local tagged = CollectionService:GetTagged("_layered")
+		local hashmap = {}
+		local correspondingTagsMap = {}
+
+		for _, object in pairs(tagged) do
+			local tags = CollectionService:GetTags(object)
+			for _, tag in pairs(tags) do
+				if tag:find("layer_") then
+					local data = tag:split("_")
+					local id = tonumber(data[3])
+					local name = data[4]
+
+					-- prevent conflicting layers
+					if hashmap[id] then
+						if hashmap[id] ~= name then
+							id = #hashmap + 1
+						end
+					end
+
+					hashmap[id] = name
+					if not correspondingTagsMap[id] then
+						correspondingTagsMap[id] = {object}
+					else
+						table.insert(correspondingTagsMap[id], object)
+					end
+				end
+			end
+		end
+
+		local sorted = {}
+		local correspondingTags = {}
+		local index = 0
+		for id, name in pairs(hashmap) do
+			index = index + 1
+			sorted[index] = name
+			correspondingTags[index] = correspondingTagsMap[id]
+		end
+
+		for id, name in pairs(sorted) do
+			if id > 1 and id <= MAX_LAYERS then
+				self:New(name)
+			end
+
+			local children = correspondingTags[id]
+			self:AddChildren(id, children)
+		end
+
+		workspace.DescendantAdded:Connect(function(child)
+			if child:IsA("BasePart") then
+				self:AddChild(self.currentLayer, child)
+			end
+		end)
+	end
+end
+
+return Layers
