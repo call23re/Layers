@@ -1,8 +1,10 @@
+local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local Selection = game:GetService("Selection")
 
 local Plugin = script.Parent
 
 local Layers = require(script.Parent.Layers)
+local Constants = require(script.Parent.Constants)
 local Roact = require(Plugin.Vendor.Roact)
 local MainPlugin = require(Plugin.Components.MainPlugin)
 
@@ -16,18 +18,11 @@ local button = toolbar:CreateButton(
 )
 button.ClickableWhenViewportHidden = true
 
-local Actions = {
-	NewLayer = plugin:CreatePluginAction("new_layer", "New Layer", "Create a new layer."),
-	RemoveLayer = plugin:CreatePluginAction("remove_layer", "Remove Layer", "Removes selected layer."),
-	MoveLayerUp = plugin:CreatePluginAction("move_layer_up", "Move Layer Up", "Moves selected layer up."),
-	MoveLayerDown = plugin:CreatePluginAction("move_layer_down", "Move Layer Down", "Moves selected layer down."),
-	MoveActiveUp = plugin:CreatePluginAction("move_active_up", "Move Up", "Moves selection to upwards layer."),
-	MoveActiveDown = plugin:CreatePluginAction("move_active_down", "Move Down", "Moves selection to downwards layer."),
-	GetSelection = plugin:CreatePluginAction("get_selection", "Select Layer", "Selects all of the parts in the current layer."),
-	MoveSelection = plugin:CreatePluginAction("move_selection_to_layer", "Move Selection to Layer", "Moves selected parts to current layer."),
-	ToggleVisibility = plugin:CreatePluginAction("toggle_layer_visibility", "Toggle Layer Visibility", "Toggles current layers visibility."),
-	ToggleLocked = plugin:CreatePluginAction("toggle_layer_locked", "Toggle Layer Locked", "Toggles current layers lock."),
-}
+local Actions = {}
+
+for actionName, action in pairs(Constants.PluginActions) do
+	Actions[actionName] = plugin:CreatePluginAction(unpack(action))
+end
 
 local main = Roact.createElement(MainPlugin, {
 	Button = button,
@@ -49,6 +44,7 @@ plugin:CreatePluginAction("make_folder", "Make Folder", "Group the selected part
 	local currentSelection = Selection:Get()
 
 	if #currentSelection > 0 then
+		ChangeHistoryService:SetWaypoint("_makeFolder" .. tick())
 		local folder = Instance.new("Folder")
 		folder.Parent = workspace
 
@@ -57,5 +53,6 @@ plugin:CreatePluginAction("make_folder", "Make Folder", "Group the selected part
 		end
 
 		Selection:Set({folder})
+		ChangeHistoryService:SetWaypoint("_madeFolder" .. tick())
 	end
 end)

@@ -1,3 +1,4 @@
+local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
 
@@ -55,6 +56,7 @@ function Layers:_UpdateChildren(layerId)
 	local layer = self.Stack[layerId]
 	
 	if layer then
+		ChangeHistoryService:SetWaypoint("_editLayers" .. tick())
 		for instance, child in pairs(layer.Children) do
 
 			if layer.Properties.Visible == false then
@@ -71,6 +73,7 @@ function Layers:_UpdateChildren(layerId)
 
 			self:_UpdateTag(child)
 		end
+		ChangeHistoryService:SetWaypoint("_editLayersFinished" .. tick())
 	end
 end
 
