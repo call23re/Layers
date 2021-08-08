@@ -290,6 +290,11 @@ function Layers:Init()
 					local id = tonumber(data[3])
 					local name = data[4]
 
+					if id == 1 and name == "Default" then
+						self:AddChild(1, object)
+						continue
+					end
+
 					-- prevent conflicting layers
 					if hashmap[id] then
 						if hashmap[id] ~= name then
