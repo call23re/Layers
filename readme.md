@@ -1,6 +1,6 @@
 # Layers
 
-Photoshop-like layering tool for building Roblox games.
+Layering tool for manipulating and visualizing logical sections of Roblox games.
 
 <https://www.roblox.com/library/7203627668/Layers>
 
@@ -29,7 +29,7 @@ None of these are bound to anything by default. To set keybinds go to File -> Ad
 # Workflows
 Using Sweetheartichoke's [Tag Editor plugin](https://www.roblox.com/library/948084095/Tag-Editor) makes it easier to distinguish between layers in the workspace.
 
-The _Select All_ tool / keybind combined with the _Make Folder_ keybind makes it easy to organize your workspace. Select Layer -> Select All -> Make Folder -> rename -> repeat.
+The _Select All_ tool / keybind combined with the _Make Folder_ shortcut makes it easy to organize your workspace. Select Layer -> _Select All_ -> _Make Folder_ -> Rename -> Repeat.
 
 
 # todo
