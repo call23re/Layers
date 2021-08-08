@@ -1,6 +1,6 @@
 # Layers
 
-Layering tool for manipulating and visualizing logical sections of Roblox games.
+Layering tool for manipulating and visualizing sections of Roblox games.
 
 <https://www.roblox.com/library/7203627668/Layers>
 
