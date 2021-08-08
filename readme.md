@@ -10,20 +10,31 @@ Functionality is very similar to layering in most image editing software.
 - You can move parts between layers.
 - You can select every part within a given layer.
 
-The plugin also adds a [PluginAction](https://developer.roblox.com/en-us/api-reference/class/PluginAction) for creating folders. To set up a keybind, go to File -> Advanced -> Customize Shortcuts, and search "make folder".
+# Shortcuts
+The plugin adds the following shortcuts to Roblox Studio:
+- Make Folder
+- New Layer
+- Remove Layer
+- Layer Up
+- Layer Down
+- Move Up
+- Move Down
+- Select Layer
+- Move Selection to Layer
+- Toggle Layer Visibility
+- Toggle Layer Locked
 
-# Screenshots
-![img](https://i.imgur.com/aaQq2JK.png)
+None of these are bound to anything by default. To set keybinds go to File -> Advanced -> Customize Shortcuts, and search for any of the listed shortcuts. All of the functionality above is available through the interface as well.
 
 # Workflows
 Using Sweetheartichoke's [Tag Editor plugin](https://www.roblox.com/library/948084095/Tag-Editor) makes it easier to distinguish between layers in the workspace.
 
-The "Select All" tool combined with the _make folder_ PluginAction makes it easy to organize your workspace. Select Layer -> Select All -> make folder keybind -> rename -> repeat.
+The _Select All_ tool / keybind combined with the _Make Folder_ keybind makes it easy to organize your workspace. Select Layer -> Select All -> Make Folder -> rename -> repeat.
 
 
 # todo
-- layer rearranging
 - layer merging
+- layer groups
 
 # Attribution
 The code base is largely written on top of sircfenner's [Collision Groups Editor Plugin](https://devforum.community/t/collision-groups-editor-plugin/374). Many of the components used came from sircfenner's [Studio Components](https://github.com/sircfenner/StudioComponents).

@@ -14,16 +14,16 @@ return function(target)
 		}),
 		ItemA = Roact.createElement(Item, {
 			Layer = {
-				id = 1,
-				name = "Layer 1"
+				Id = 1,
+				Name = "Layer 1"
 			},
 			Size = UDim2.new(0, 300, 0, 60),
 			OnActivated = function() print("clicked") end
 		}),
 		ItemB = Roact.createElement(Item, {
 			Layer = {
-				id = 2,
-				name = "Layer 2"
+				Id = 2,
+				Name = "Layer 2"
 			},
 			Size = UDim2.new(0, 300, 0, 60),
 			OnActivated = function() print("clicked") end

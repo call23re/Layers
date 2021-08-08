@@ -16,6 +16,7 @@ local function List(props)
 			Roact.createElement(Item, {
 				Layer = layer,
 				SelectedLayer = (layer.Id == props.SelectedLayerId),
+				NumLayers = #props.Layers,
 				Opacity = layer.Properties.Transparency,
 				LayoutOrder = (Constants.MaxLayers - layer.Id),
 				OnActivated = function()
@@ -31,6 +32,16 @@ local function List(props)
 				OnLockToggled = function()
 					if not props.Disabled then
 						props.ToggleLock(layer.Id)
+					end
+				end,
+				MoveLayerUp = function()
+					if not props.Disabled then
+						props.MoveLayerUp(layer.Id)
+					end
+				end,
+				MoveLayerDown = function()
+					if not props.Disabled then
+						props.MoveLayerDown(layer.Id)
 					end
 				end,
 				Disabled = props.Disabled

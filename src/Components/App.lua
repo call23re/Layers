@@ -28,6 +28,8 @@ function App:init()
 		MaxLayers = false
 	})
 
+	self.Connections = {}
+
 	self.batchSetLayer = function(instances, id)
 		Layers:AddChildren(id, instances)
 		self:update(id)
@@ -101,6 +103,87 @@ function App:init()
 		self:setState({ Layers = Layers.Stack })
 	end
 
+	self.moveLayerUp = function(id)
+		if id ~= 1 and Layers.Stack[id + 1] then
+			Layers:Move(id, 1)
+			self:update(id + 1)
+			self:setState({ Layers = Layers.Stack })
+		end
+	end
+
+	self.moveLayerDown = function(id)
+		if id ~= 1 and id - 1 > 1 then
+			Layers:Move(id, -1)
+			self:update(id - 1)
+			self:setState({ Layers = Layers.Stack })
+		end
+	end
+
+	-- keybinds
+	table.insert(self.Connections, self.props.Actions["NewLayer"].Triggered:Connect(function()
+		if not self.state.CreatingLayer or self.state.DeletingLayer then
+			self:setState({ CreatingLayer = true })
+		end
+	end))
+
+	table.insert(self.Connections, self.props.Actions["RemoveLayer"].Triggered:Connect(function()
+		if not self.state.CreatingLayer or self.state.DeletingLayer then
+			self:setState({ DeletingLayer = true })
+		end
+	end))
+
+	table.insert(self.Connections, self.props.Actions["MoveLayerUp"].Triggered:Connect(function()
+		self.moveLayerUp(self.state.SelectedLayerId)
+	end))
+
+	table.insert(self.Connections, self.props.Actions["MoveLayerDown"].Triggered:Connect(function()
+		self.moveLayerDown(self.state.SelectedLayerId)
+	end))
+
+	table.insert(self.Connections, self.props.Actions["MoveActiveUp"].Triggered:Connect(function()
+		local newId = self.state.SelectedLayerId + 1
+		if newId <= #Layers.Stack then
+			self:update(newId)
+		end
+	end))
+
+	table.insert(self.Connections, self.props.Actions["MoveActiveDown"].Triggered:Connect(function()
+		local newId = self.state.SelectedLayerId - 1
+		if newId > 0 then
+			self:update(newId)
+		end
+	end))
+
+	table.insert(self.Connections, self.props.Actions["GetSelection"].Triggered:Connect(function()
+		self.updateSelection()
+	end))
+
+	table.insert(self.Connections, self.props.Actions["MoveSelection"].Triggered:Connect(function()
+		local targets = {}
+
+		for _, obj in pairs(Selection:Get()) do
+			if obj:IsA("BasePart") and obj.Parent ~= nil then
+				table.insert(targets, obj)
+			end
+		end
+
+		self.batchSetLayer(targets, self.state.SelectedLayerId)
+	end))
+
+	table.insert(self.Connections, self.props.Actions["ToggleVisibility"].Triggered:Connect(function()
+		self.toggleVisibility(self.state.SelectedLayerId)
+	end))
+
+	table.insert(self.Connections, self.props.Actions["ToggleLocked"].Triggered:Connect(function()
+		self.toggleLock(self.state.SelectedLayerId)
+	end))
+
+end
+
+function App:willUnmount()
+	for _, conn in pairs(self.Connections) do
+		conn:Disconnect()
+	end
 end
 
 function App:update(id)
@@ -188,6 +271,12 @@ function App:render()
 				end,
 				ToggleLock = function(id)
 					self.toggleLock(id)
+				end,
+				MoveLayerUp = function(id)
+					self.moveLayerUp(id)
+				end,
+				MoveLayerDown = function(id)
+					self.moveLayerDown(id)
 				end
 			}),
 			Bar = Roact.createElement("Frame", {

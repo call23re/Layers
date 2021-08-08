@@ -11,14 +11,15 @@ function Item:init()
 	self:setState({
 		Active = true,
 		Hover = false,
-		Visible = true,
-		Locked = false
+		Visible = self.props.Layer.Properties.Visible,
+		Locked = self.props.Layer.Properties.Locked
 	})
 
 	self.onInputBegan = function(_, input)
 		if self.props.Disabled then
 			return
 		end
+
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
 			self:setState({ Hover = true })
 		end
@@ -43,16 +44,13 @@ function Item:init()
 		end
 		self:setState({ Locked = not self.state.Locked })
 	end
+
 end
 
 function Item:render()
 
 	local color = Enum.StudioStyleGuideColor.FilterButtonDefault
-	if self.props.Selected then
-		color = Enum.StudioStyleGuideColor.FilterButtonChecked
-	elseif self.state.Hover then
-		color = Enum.StudioStyleGuideColor.FilterButtonHover
-	elseif self.props.SelectedLayer then
+	if self.props.SelectedLayer then
 		color = settings().Studio.Theme.Name == "Dark" and Enum.StudioStyleGuideColor.Button or Enum.StudioStyleGuideColor.MainButton
 	end
 
@@ -63,15 +61,20 @@ function Item:render()
 			modifier = Enum.StudioStyleGuideModifier.Disabled
 		end
 
-		local lockIcon = self.state.Locked and "rbxassetid://7199980830" or "rbxassetid://7199980066"
-		local visibleIcon = self.state.Visible and "rbxassetid://7199979125" or "rbxassetid://7199979548"
+		local lockIcon = self.props.Layer.Properties.Locked and "rbxassetid://7199980830" or "rbxassetid://7199980066"
+		local visibleIcon = self.props.Layer.Properties.Visible and "rbxassetid://7199979125" or "rbxassetid://7199979548"
+
+		local canGoUp = (self.props.Layer.Id + 1 <= self.props.NumLayers)
+		local canGoDown = (self.props.Layer.Id - 1 > 1)
 
 		return Roact.createElement("Frame", {
 			BackgroundColor3 = theme:GetColor(color, modifier),
 			BorderSizePixel = 1,
 			BorderColor3 = theme:GetColor(Enum.StudioStyleGuideColor.Border, modifier),
 			LayoutOrder = self.props.LayoutOrder,
-			Size = self.props.Size or UDim2.new(1, 0, 0, 60)
+			Size = self.props.Size or UDim2.new(1, 0, 0, 60),
+			[Roact.Event.InputBegan] = self.onInputBegan,
+			[Roact.Event.InputEnded] = self.onInputEnded,
 		}, {
 			Button = Roact.createElement("TextButton", {
 				BackgroundTransparency = 1,
@@ -124,12 +127,43 @@ function Item:render()
 					Size = UDim2.new(0, 25, 0, 25),
 				}),
 			}),
+			Shift = Roact.createElement("Frame", {
+				BackgroundTransparency = 1,
+				BackgroundColor3 = theme:GetColor(color, modifier),
+				BorderSizePixel = 1,
+				BorderColor3 = theme:GetColor(Enum.StudioStyleGuideColor.Border, modifier),
+				Position = UDim2.new(1, -25, 0, 0),
+				Size = UDim2.new(0, 20, 1, 0),
+				Visible = self.state.Hover and self.props.Layer.Id ~= 1 and (canGoUp or canGoDown)
+			}, {
+				Up = Roact.createElement("ImageButton", {
+					BackgroundTransparency = 1,
+					LayoutOrder = 0,
+					Size = UDim2.new(0, 20, 0.5, 0),
+					Image = "rbxassetid://7220043556",
+					ImageColor3 = theme:GetColor(Enum.StudioStyleGuideColor.MainText),
+					ScaleType = Enum.ScaleType.Fit,
+					Visible = canGoUp,
+					[Roact.Event.MouseButton1Click] = self.props.MoveLayerUp
+				}),
+				Down = Roact.createElement("ImageButton", {
+					BackgroundTransparency = 1,
+					LayoutOrder = 1,
+					Position = UDim2.new(0, 0, 1, -30),
+					Size = UDim2.new(0, 20, 0.5, 0),
+					Image = "rbxassetid://7220043843",
+					ImageColor3 = theme:GetColor(Enum.StudioStyleGuideColor.MainText),
+					ScaleType = Enum.ScaleType.Fit,
+					Visible = canGoDown,
+					[Roact.Event.MouseButton1Click] = self.props.MoveLayerDown
+				})
+			}),
 			Lock = Roact.createElement("ImageButton", {
 				AnchorPoint = Vector2.new(0, 0.5),
 				BackgroundTransparency = 1,
 				Image = lockIcon,
 				ImageColor3 = theme:GetColor(Enum.StudioStyleGuideColor.MainText),
-				Position = UDim2.new(1, - 40, 0.5, 0),
+				Position = (self.state.Hover and self.props.Layer.Id ~= 1 and (canGoUp or canGoDown)) and UDim2.new(1, -65, 0.5, 0) or UDim2.new(1, -40, 0.5, 0),
 				ScaleType = Enum.ScaleType.Fit,
 				Size = UDim2.new(0, 20, 0, 20),
 				[Roact.Event.MouseButton1Click] = function()

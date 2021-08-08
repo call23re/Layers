@@ -37,6 +37,9 @@ function LayerWidget:render()
 	local message = nil
 	if #lastText == 0 then
 		valid = false
+	elseif #lastText > 20 then
+		valid = false
+		message = "Name too long"
 	else
 		for _, group in ipairs(layers) do
 			if group.name == lastText and group.name ~= self.props.LayerName then

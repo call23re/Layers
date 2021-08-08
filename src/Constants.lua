@@ -1,3 +1,3 @@
 return {
-	MaxLayers = 100
+	MaxLayers = 1000
 }

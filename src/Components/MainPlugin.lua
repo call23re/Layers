@@ -38,7 +38,9 @@ function MainPlugin:render()
 			self:setEnabled(false)
 		end,
 	}, {
-		App = Roact.createElement(App),
+		App = Roact.createElement(App, {
+			Actions = self.props.Actions
+		}),
 	})
 end
 

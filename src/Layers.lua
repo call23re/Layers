@@ -248,6 +248,26 @@ function Layers:Remove(layerId)
 	
 end
 
+function Layers:Move(layerId, direction)
+	local newId = layerId + direction
+
+	if newId <= 1 then
+		return
+	end
+
+	-- only update if there's a layer to switch with
+	if not self.Stack[newId] then
+		return
+	end
+
+	local copy = unpack({self.Stack[newId]})
+	self.Stack[newId] = self.Stack[layerId]
+	self.Stack[layerId] = copy
+
+	self:_UpdateStack()
+	
+end
+
 function Layers:SetCurrentLayer(layerId)
 	if self.Stack[layerId] then
 		self.currentLayer = layerId
