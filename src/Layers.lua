@@ -1,11 +1,21 @@
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
+local ServerStorage = game:GetService("ServerStorage")
 
 local Constants = require(script.Parent.Constants)
 
 local MAX_LAYERS = Constants.MaxLayers
 local TAG_FORMAT = "_layer_%s_%s"
+
+local ParentFolder;
+if ServerStorage:FindFirstChild("_layers") == nil then
+	ParentFolder = Instance.new("Folder")
+	ParentFolder.Name = "_layers"
+	ParentFolder.Parent = ServerStorage
+else
+	ParentFolder = ServerStorage._layers
+end
 
 local Layers = {
 	Stack = {},
@@ -34,7 +44,8 @@ function Layers:_SaveChildren(layerId)
 		for instance, child in pairs(layer) do
 			child.Properties.Anchored = instance.Anchored
 			child.Properties.Locked = instance.Locked
-			child.Properties.Transparency = instance.Transparency
+			child.Properties.Parent = instance.Parent
+			--child.Properties.Transparency = instance.Transparency
 		end
 	end
 end
@@ -60,15 +71,30 @@ function Layers:_UpdateChildren(layerId)
 		for instance, child in pairs(layer.Children) do
 
 			if layer.Properties.Visible == false then
-				child.Properties.Transparency = instance.Transparency
-			else
-				if instance.Transparency ~= 1 then
-					child.Properties.Transparency = instance.Transparency
+
+				if ParentFolder.Parent == nil then
+					-- someone deleted the _layers folder
+					ParentFolder = Instance.new("Folder")
+					ParentFolder.Name = "_layers"
+					ParentFolder.Parent = ServerStorage
+				end
+
+				child.Properties.Parent = instance.Parent
+				instance.Parent = ParentFolder
+			elseif layer.Properties.Visible == true then
+				if child.Properties.Parent ~= nil then
+					if child.Properties.Parent.Parent ~= nil then
+						instance.Parent = child.Properties.Parent
+					else
+						instance.Parent = workspace
+					end
+				else
+					instance.Parent = workspace
 				end
 			end
 			
 			instance.Locked = layer.Properties.Locked 
-			instance.Transparency = (layer.Properties.Visible and child.Properties.Transparency or 1)
+			--instance.Transparency = (layer.Properties.Visible and child.Properties.Transparency or 1)
 			--instance.Anchored = (layer.Properties.Visible and child.Properties.Anchored or true)
 
 			self:_UpdateTag(child)
@@ -78,7 +104,7 @@ function Layers:_UpdateChildren(layerId)
 end
 
 function Layers:_GetProperties(instance)
-	local match = {"Anchored", "Locked", "Transparency"}
+	local match = {"Anchored", "Locked", "Parent"}
 	local properties = {}
 	
 	for _, property in pairs(match) do
@@ -117,7 +143,8 @@ function Layers:AddChild(layerId, instance)
 		CollectionService:AddTag(instance, TAG_FORMAT:format(layerId, layer.Name))
 		
 		instance.Locked = layer.Properties.Locked 
-		instance.Transparency = (layer.Properties.Visible and instance.Transparency or 1)
+		instance.Parent = layer.Properties.Visible and instance.Parent or ParentFolder
+		--instance.Transparency = (layer.Properties.Visible and instance.Transparency or 1)
 		--instance.Anchored = (layer.Properties.Visible and instance.Anchored or true)
 		
 		layer.Children[instance] = Child
@@ -151,7 +178,16 @@ function Layers:ResetChild(instance)
 		-- reset properties
 		--instance.Anchored = Child.Properties.Anchored
 		instance.Locked = Child.Properties.Locked
-		instance.Transparency = Child.Properties.Transparency
+		if Child.Properties.Parent then
+			if Child.Properties.Parent.Parent then
+				instance.Parent = Child.Properties.Parent
+			else
+				instance.Parent = workspace
+			end
+		else
+			instance.Parent = workspace
+		end
+		--instance.Transparency = Child.Properties.Transparency
 		
 		-- remove lookup
 		self.Lookup[instance] = nil
@@ -329,13 +365,20 @@ function Layers:Init()
 				self:New(name)
 			end
 
+			local Parent = correspondingTags[id][1].Parent
+			if Parent == ParentFolder then
+				self:ToggleProperty(id, "Visible")
+			end
+
 			local children = correspondingTags[id]
 			self:AddChildren(id, children)
 		end
 
 		workspace.DescendantAdded:Connect(function(child)
 			if child:IsA("BasePart") then
-				self:AddChild(self.currentLayer, child)
+				if not self.Lookup[child] then
+					self:AddChild(self.currentLayer, child)
+				end
 			end
 		end)
 
@@ -343,8 +386,10 @@ function Layers:Init()
 		-- also keeping references to destroyed parts could potentially lead to memory leaks
 		workspace.DescendantRemoving:Connect(function(child)
 			if self.Lookup[child] then
-				self:RemoveChild(self.Lookup[child].Id, child)
-				self.Lookup[child] = nil
+				if child.Parent == nil then
+					self:RemoveChild(self.Lookup[child].Id, child)
+					self.Lookup[child] = nil
+				end
 			end
 		end)
 	end
