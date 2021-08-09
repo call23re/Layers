@@ -55,7 +55,7 @@ function LayerWidget:render()
 		Name = "saveLayerWidget",
 		Title = self.props.Title,
 		InitialDockState = Enum.InitialDockState.Float,
-		MinimumWindowSize = Vector2.new(340, 150),
+		MinimumWindowSize = Vector2.new(185, 85),
 		OnClosed = self.props.OnClosed
 	}, {
 		Padding = Roact.createElement("UIPadding", {

@@ -61,6 +61,10 @@ function Layers:_UpdateTag(child)
 
 	CollectionService:AddTag(child.Part, "_layered")
 	CollectionService:AddTag(child.Part, TAG_FORMAT:format(layer.Id, layer.Name))
+
+	if not layer.Properties.Visible then
+		CollectionService:AddTag(child.Part, "_layerParent_" .. child.Properties.Parent:GetFullName())
+	end
 end
 
 function Layers:_UpdateChildren(layerId)
@@ -82,6 +86,9 @@ function Layers:_UpdateChildren(layerId)
 				child.Properties.Parent = instance.Parent
 				instance.Parent = ParentFolder
 			elseif layer.Properties.Visible == true then
+
+				self:_UpdateTag(child)
+
 				if child.Properties.Parent ~= nil then
 					if child.Properties.Parent.Parent ~= nil then
 						instance.Parent = child.Properties.Parent
@@ -142,6 +149,10 @@ function Layers:AddChild(layerId, instance)
 		CollectionService:AddTag(instance, "_layered")
 		CollectionService:AddTag(instance, TAG_FORMAT:format(layerId, layer.Name))
 		
+		if not layer.Properties.Visible then
+			CollectionService:AddTag(instance, "_layerParent_" .. instance.Parent:GetFullName())
+		end
+
 		instance.Locked = layer.Properties.Locked 
 		instance.Parent = layer.Properties.Visible and instance.Parent or ParentFolder
 		--instance.Transparency = (layer.Properties.Visible and instance.Transparency or 1)
@@ -315,11 +326,13 @@ end
 
 function Layers:Init()
 	if RunService:IsEdit() then
+
 		self:New("Default")
 
 		local tagged = CollectionService:GetTagged("_layered")
 		local hashmap = {}
 		local correspondingTagsMap = {}
+		local parentMap = {}
 
 		for _, object in pairs(tagged) do
 			local tags = CollectionService:GetTags(object)
@@ -348,6 +361,24 @@ function Layers:Init()
 						table.insert(correspondingTagsMap[id], object)
 					end
 				end
+
+				if tag:find("_layerParent") then
+					-- this is a terrible temporary solution
+					local pathTable = tag:split("_layerParent_")[2]:split(".")
+					local path = game
+					local valid = true
+
+					for i = 1, #pathTable do
+						path = path:FindFirstChild(pathTable[i])
+						if not path then
+							valid = false
+							break
+						end
+					end
+
+					parentMap[object] = valid and path or workspace
+
+				end
 			end
 		end
 
@@ -372,6 +403,13 @@ function Layers:Init()
 
 			local children = correspondingTags[id]
 			self:AddChildren(id, children)
+
+			for _, obj in pairs(children) do
+				if parentMap[obj] then
+					local child = self.Lookup[obj]
+					child.Properties.Parent = parentMap[obj]
+				end
+			end
 		end
 
 		workspace.DescendantAdded:Connect(function(child)

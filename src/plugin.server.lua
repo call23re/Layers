@@ -8,12 +8,6 @@ local Constants = require(script.Parent.Constants)
 local Roact = require(Plugin.Vendor.Roact)
 local MainPlugin = require(Plugin.Components.MainPlugin)
 
-if game.ServerStorage:FindFirstChild("_layers") == nil then
-	local parentFolder = Instance.new("Folder")
-	parentFolder.Name = "_layers"
-	parentFolder.Parent = game.ServerStorage
-end
-
 Layers:Init()
 
 local toolbar = plugin:CreateToolbar("Layers")
