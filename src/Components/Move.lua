@@ -15,7 +15,7 @@ function Move:init()
 
 	self.onActivated = function()
 		local targets = {}
-		for _, instance in ipairs(self.state.Selection) do
+		for _, instance in pairs(self.state.Selection) do
 			if instance:IsA("BasePart") then
 				table.insert(targets, instance)
 			end
@@ -37,12 +37,11 @@ end
 function Move:render()
 	local valid = false
 
-	for _, instance in ipairs(self.state.Selection) do
+	for _, instance in pairs(self.state.Selection) do
 		if not instance:IsA("BasePart") then
 			continue
-		elseif CollectionService:HasTag(instance, '_layered') then
+		else
 			valid = true
-			break
 		end
 	end
 
