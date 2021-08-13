@@ -3,6 +3,7 @@ local SelectionService = game:GetService("Selection")
 
 local Plugin = script.Parent.Parent
 
+local Constants = require(Plugin.Constants)
 local Roact = require(Plugin.Vendor.Roact)
 local StudioComponents = require(Plugin.Vendor.StudioComponents)
 
@@ -16,9 +17,19 @@ function Move:init()
 	self.onActivated = function()
 		local targets = {}
 		for _, instance in pairs(self.state.Selection) do
-			if instance:IsA("BasePart") then
+			local valid = false
+
+			for _, baseType in pairs(Constants.ValidInstances) do
+				if instance:IsA(baseType) then
+					valid = true
+					continue
+				end
+			end
+	
+			if valid then
 				table.insert(targets, instance)
 			end
+
 		end
 		self.props.BatchSetLayer(targets)
 	end
@@ -38,10 +49,16 @@ function Move:render()
 	local valid = false
 
 	for _, instance in pairs(self.state.Selection) do
-		if not instance:IsA("BasePart") then
+
+		for _, baseType in pairs(Constants.ValidInstances) do
+			if instance:IsA(baseType) then
+				valid = true
+				continue
+			end
+		end
+
+		if valid then
 			continue
-		else
-			valid = true
 		end
 	end
 

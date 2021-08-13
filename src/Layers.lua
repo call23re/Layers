@@ -4,6 +4,7 @@ local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Constants = require(script.Parent.Constants)
+local Util = require(script.Parent.Util)
 
 local MAX_LAYERS = Constants.MaxLayers
 local TAG_FORMAT = "_layer_%s_%s"
@@ -42,8 +43,10 @@ function Layers:_SaveChildren(layerId)
 
 	if layer then
 		for instance, child in pairs(layer) do
-			child.Properties.Anchored = instance.Anchored
-			child.Properties.Locked = instance.Locked
+			if instance:IsA("BasePart") then
+				child.Properties.Anchored = instance.Anchored
+				child.Properties.Locked = instance.Locked
+			end
 			child.Properties.Parent = instance.Parent
 			--child.Properties.Transparency = instance.Transparency
 		end
@@ -63,7 +66,11 @@ function Layers:_UpdateTag(child)
 	CollectionService:AddTag(child.Part, TAG_FORMAT:format(layer.Id, layer.Name))
 
 	if not layer.Properties.Visible then
-		CollectionService:AddTag(child.Part, "_layerParent_" .. child.Properties.Parent:GetFullName())
+		if child.Properties.Parent then
+			if child.Properties.Parent.Parent then
+				CollectionService:AddTag(child.Part, "_layerParent_" .. child.Properties.Parent:GetFullName())
+			end
+		end
 	end
 end
 
@@ -83,8 +90,13 @@ function Layers:_UpdateChildren(layerId)
 					ParentFolder.Parent = ServerStorage
 				end
 
-				child.Properties.Parent = instance.Parent
-				instance.Parent = ParentFolder
+				if instance.Parent == nil then
+					self:RemoveChild(layerId, instance)
+				else
+					child.Properties.Parent = instance.Parent
+					instance.Parent = ParentFolder
+				end
+
 			elseif layer.Properties.Visible == true then
 
 				self:_UpdateTag(child)
@@ -100,9 +112,11 @@ function Layers:_UpdateChildren(layerId)
 				end
 			end
 			
-			instance.Locked = layer.Properties.Locked 
-			--instance.Transparency = (layer.Properties.Visible and child.Properties.Transparency or 1)
-			--instance.Anchored = (layer.Properties.Visible and child.Properties.Anchored or true)
+			if instance:IsA("BasePart") then
+				instance.Locked = layer.Properties.Locked 
+				--instance.Transparency = (layer.Properties.Visible and child.Properties.Transparency or 1)
+				--instance.Anchored = (layer.Properties.Visible and child.Properties.Anchored or true)
+			end
 
 			self:_UpdateTag(child)
 		end
@@ -115,7 +129,9 @@ function Layers:_GetProperties(instance)
 	local properties = {}
 	
 	for _, property in pairs(match) do
-		properties[property] = instance[property]
+		pcall(function()
+			properties[property] = instance[property]
+		end)
 	end
 	
 	return properties
@@ -125,9 +141,12 @@ end
 function Layers:AddChild(layerId, instance)
 	
 	-- only parts _for now_
-	if not instance:IsA("BasePart") then
+	if not Util.ValidSelection({instance}) then
 		return false
 	end
+	--[[if not instance:IsA("BasePart") then
+		return false
+	end]]
 	
 	local layer = self.Stack[layerId]
 	
@@ -153,10 +172,12 @@ function Layers:AddChild(layerId, instance)
 			CollectionService:AddTag(instance, "_layerParent_" .. instance.Parent:GetFullName())
 		end
 
-		instance.Locked = layer.Properties.Locked 
 		instance.Parent = layer.Properties.Visible and instance.Parent or ParentFolder
-		--instance.Transparency = (layer.Properties.Visible and instance.Transparency or 1)
-		--instance.Anchored = (layer.Properties.Visible and instance.Anchored or true)
+		if instance:IsA("BasePart") then
+			instance.Locked = layer.Properties.Locked 
+			--instance.Transparency = (layer.Properties.Visible and instance.Transparency or 1)
+			--instance.Anchored = (layer.Properties.Visible and instance.Anchored or true)
+		end
 		
 		layer.Children[instance] = Child
 		self.Lookup[instance] = Child
@@ -188,15 +209,19 @@ function Layers:ResetChild(instance)
 	if Child then
 		-- reset properties
 		--instance.Anchored = Child.Properties.Anchored
-		instance.Locked = Child.Properties.Locked
-		if Child.Properties.Parent then
-			if Child.Properties.Parent.Parent then
-				instance.Parent = Child.Properties.Parent
+		if instance:IsA("BasePart") then
+			instance.Locked = Child.Properties.Locked
+		end
+
+		if instance.Parent ~= nil then
+			if Child.Properties.Parent then
+				if Child.Properties.Parent.Parent then
+					instance.Parent = Child.Properties.Parent
+					instance.Parent = workspace
+				end
 			else
 				instance.Parent = workspace
 			end
-		else
-			instance.Parent = workspace
 		end
 		--instance.Transparency = Child.Properties.Transparency
 		
@@ -282,7 +307,7 @@ function Layers:Remove(layerId)
 	if layer then
 		
 		-- move children to the default layer
-		for instance, child in pairs(layer.Children) do
+		for instance, _ in pairs(layer.Children) do
 			self:AddChild(1, instance)
 		end
 		
@@ -413,7 +438,7 @@ function Layers:Init()
 		end
 
 		workspace.DescendantAdded:Connect(function(child)
-			if child:IsA("BasePart") then
+			if Util.ValidSelection({child}) then
 				if not self.Lookup[child] then
 					self:AddChild(self.currentLayer, child)
 				end
@@ -430,6 +455,7 @@ function Layers:Init()
 				end
 			end
 		end)
+		
 	end
 end
 

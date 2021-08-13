@@ -1,5 +1,8 @@
 return {
+	ValidInstances = {"BasePart", "Model", "Folder", "Decal"},
+
 	MaxLayers = 1000,
+
 	PluginActions = {
 		NewLayer = {"new_layer", "New Layer", "Create a new layer."},
 		RemoveLayer = {"remove_layer", "Remove Layer", "Removes selected layer."},
