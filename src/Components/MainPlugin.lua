@@ -15,6 +15,7 @@ end
 function MainPlugin:setEnabled(enabled)
 	self:setState({ Enabled = enabled })
 	self.props.Button:SetActive(enabled)
+	self.props.OnEnabled(enabled)
 end
 
 function MainPlugin:didMount()

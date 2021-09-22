@@ -10,15 +10,20 @@ local MAX_LAYERS = Constants.MaxLayers
 local TAG_FORMAT = "_layer_%s_%s"
 
 local ParentFolder;
-if ServerStorage:FindFirstChild("_layers") == nil then
-	ParentFolder = Instance.new("Folder")
-	ParentFolder.Name = "_layers"
-	ParentFolder.Parent = ServerStorage
-else
+if ServerStorage:FindFirstChild("_layers") then
 	ParentFolder = ServerStorage._layers
 end
 
+local function makeParentFolder()
+	if not ServerStorage:FindFirstChild("_layers") then
+		ParentFolder = Instance.new("Folder")
+		ParentFolder.Name = "_layers"
+		ParentFolder.Parent = ServerStorage
+	end
+end
+
 local Layers = {
+	Enabled = false,
 	Stack = {},
 	Lookup = {},
 	numberLayers = 0,
@@ -74,41 +79,42 @@ function Layers:_UpdateTag(child)
 	end
 end
 
-function Layers:_UpdateChildren(layerId)
+function Layers:_UpdateChildren(layerId, property)
 	local layer = self.Stack[layerId]
 	
 	if layer then
 		ChangeHistoryService:SetWaypoint("_editLayers" .. tick())
 		for instance, child in pairs(layer.Children) do
 
-			if layer.Properties.Visible == false then
+			if property == "Visible" then
+				if layer.Properties.Visible == false then
 
-				if ParentFolder.Parent == nil then
-					-- someone deleted the _layers folder
-					ParentFolder = Instance.new("Folder")
-					ParentFolder.Name = "_layers"
-					ParentFolder.Parent = ServerStorage
-				end
+					makeParentFolder()
 
-				if instance.Parent == nil then
-					self:RemoveChild(layerId, instance)
-				else
-					child.Properties.Parent = instance.Parent
-					instance.Parent = ParentFolder
-				end
+					if instance.Parent == nil then
+						self:RemoveChild(layerId, instance)
+					else
+						child.Properties.Parent = instance.Parent
+						instance.Parent = ParentFolder
+					end
 
-			elseif layer.Properties.Visible == true then
+				elseif layer.Properties.Visible == true then
 
-				self:_UpdateTag(child)
+					self:_UpdateTag(child)
 
-				if child.Properties.Parent ~= nil then
-					if child.Properties.Parent.Parent ~= nil then
-						instance.Parent = child.Properties.Parent
+					if child.Properties.Parent ~= nil then
+						if child.Properties.Parent.Parent ~= nil then
+							instance.Parent = child.Properties.Parent
+						else
+							instance.Parent = workspace
+						end
 					else
 						instance.Parent = workspace
 					end
-				else
-					instance.Parent = workspace
+
+					if #ParentFolder:GetChildren() == 0 then
+						ParentFolder:Destroy()
+					end
 				end
 			end
 			
@@ -169,10 +175,11 @@ function Layers:AddChild(layerId, instance)
 		CollectionService:AddTag(instance, TAG_FORMAT:format(layerId, layer.Name))
 		
 		if not layer.Properties.Visible then
+			makeParentFolder()
 			CollectionService:AddTag(instance, "_layerParent_" .. instance.Parent:GetFullName())
+			instance.Parent = ParentFolder
 		end
 
-		instance.Parent = layer.Properties.Visible and instance.Parent or ParentFolder
 		if instance:IsA("BasePart") then
 			instance.Locked = layer.Properties.Locked 
 			--instance.Transparency = (layer.Properties.Visible and instance.Transparency or 1)
@@ -217,7 +224,7 @@ function Layers:ResetChild(instance)
 			if Child.Properties.Parent then
 				if Child.Properties.Parent.Parent then
 					instance.Parent = Child.Properties.Parent
-					instance.Parent = workspace
+					--instance.Parent = workspace
 				end
 			else
 				instance.Parent = workspace
@@ -293,7 +300,7 @@ function Layers:ToggleProperty(layerId, property)
 	
 	if layer then
 		layer.Properties[property] = not layer.Properties[property]
-		self:_UpdateChildren(layerId)
+		self:_UpdateChildren(layerId, property)
 	end
 end
 
@@ -349,9 +356,14 @@ function Layers:SetCurrentLayer(layerId)
 	end
 end
 
+function Layers:SetEnabled(Enabled)
+	self.Enabled = Enabled
+end
+
 function Layers:Init()
 	if RunService:IsEdit() then
 
+		self:SetEnabled(true)
 		self:New("Default")
 
 		local tagged = CollectionService:GetTagged("_layered")
@@ -422,8 +434,10 @@ function Layers:Init()
 			end
 
 			local Parent = correspondingTags[id][1].Parent
-			if Parent == ParentFolder then
-				self:ToggleProperty(id, "Visible")
+			if ParentFolder then
+				if Parent == ParentFolder then
+					self:ToggleProperty(id, "Visible")
+				end
 			end
 
 			local children = correspondingTags[id]
@@ -438,9 +452,13 @@ function Layers:Init()
 		end
 
 		workspace.DescendantAdded:Connect(function(child)
-			if Util.ValidSelection({child}) then
-				if not self.Lookup[child] then
-					self:AddChild(self.currentLayer, child)
+			if self.Enabled then
+				if Util.ValidSelection({child}) then
+					if not self.Lookup[child] then
+						task.defer(function()
+							self:AddChild(self.currentLayer, child)
+						end)
+					end
 				end
 			end
 		end)

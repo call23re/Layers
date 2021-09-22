@@ -26,13 +26,17 @@ end
 
 local main = Roact.createElement(MainPlugin, {
 	Button = button,
-	Actions = Actions
+	Actions = Actions,
+	OnEnabled = function(Enabled)
+		Layers:SetEnabled(Enabled)
+	end
 })
 
 local handle = Roact.mount(main, nil)
 
 plugin.Unloading:Connect(function()
 	Roact.unmount(handle)
+	Layers:SetEnabled(false)
 end)
 
 settings().Studio.ThemeChanged:connect(function()
