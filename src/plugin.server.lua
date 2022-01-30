@@ -39,7 +39,7 @@ plugin.Unloading:Connect(function()
 	Layers:SetEnabled(false)
 end)
 
-settings().Studio.ThemeChanged:connect(function()
+settings().Studio.ThemeChanged:Connect(function()
 	Roact.update(handle, main)
 end)
 

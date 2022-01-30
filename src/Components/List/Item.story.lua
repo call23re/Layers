@@ -3,6 +3,25 @@ local Roact = require(Vendor.Roact)
 
 local Item = require(script.Parent.Item)
 
+local layers = {}
+local max = 5
+
+for i = max, 1, -1 do
+	table.insert(layers, Roact.createElement(Item, {
+		NumLayers = max,
+		Layer = {
+			Id =i,
+			Name = "Layer " .. i,
+			Properties = {
+				Visible = math.random() > 0.5,
+				Locked = false
+			}
+		},
+		Size = UDim2.new(0, 300, 0, 60),
+		OnActivated = function() print("clicked") end
+	}))
+end
+
 return function(target)
 	local element = Roact.createFragment({
 		Layout = Roact.createElement("UIListLayout", {
@@ -12,22 +31,7 @@ return function(target)
 			HorizontalAlignment = Enum.HorizontalAlignment.Center,
 			VerticalAlignment = Enum.VerticalAlignment.Center,
 		}),
-		ItemA = Roact.createElement(Item, {
-			Layer = {
-				Id = 1,
-				Name = "Layer 1"
-			},
-			Size = UDim2.new(0, 300, 0, 60),
-			OnActivated = function() print("clicked") end
-		}),
-		ItemB = Roact.createElement(Item, {
-			Layer = {
-				Id = 2,
-				Name = "Layer 2"
-			},
-			Size = UDim2.new(0, 300, 0, 60),
-			OnActivated = function() print("clicked") end
-		})
+		unpack(layers)
 	})
 	
 	local handle = Roact.mount(element, target)
