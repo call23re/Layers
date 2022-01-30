@@ -64,6 +64,9 @@ function Item:render()
 		local lockIcon = self.props.Layer.Properties.Locked and "rbxassetid://7199980830" or "rbxassetid://7199980066"
 		local visibleIcon = self.props.Layer.Properties.Visible and "rbxassetid://7199979125" or "rbxassetid://7199979548"
 
+		local MainEnum = Enum.StudioStyleGuideColor.MainText
+		local MainColor = self.props.Layer.Properties.Visible and theme:GetColor(MainEnum) or theme:GetColor(MainEnum, Enum.StudioStyleGuideModifier.Disabled)
+
 		local canGoUp = (self.props.Layer.Id + 1 <= self.props.NumLayers)
 		local canGoDown = (self.props.Layer.Id - 1 > 1)
 
@@ -89,7 +92,7 @@ function Item:render()
 				Position = UDim2.new(0, 75, 0, 10),
 				Size = UDim2.new(1, -75, 0, 20),
 				Text = self.props.Layer.Name,
-				TextColor3 = theme:GetColor(Enum.StudioStyleGuideColor.MainText),
+				TextColor3 = MainColor,
 				TextSize = 14,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextYAlignment = Enum.TextYAlignment.Top
@@ -121,7 +124,7 @@ function Item:render()
 					AnchorPoint = Vector2.new(0.5, 0.5),
 					BackgroundTransparency = 1,
 					Image = visibleIcon,
-					ImageColor3 = theme:GetColor(Enum.StudioStyleGuideColor.MainText),
+					ImageColor3 = MainColor,
 					Position = UDim2.new(0.5, 0, 0.5, 0),
 					ScaleType = Enum.ScaleType.Fit,
 					Size = UDim2.new(0, 25, 0, 25),
@@ -162,7 +165,7 @@ function Item:render()
 				AnchorPoint = Vector2.new(0, 0.5),
 				BackgroundTransparency = 1,
 				Image = lockIcon,
-				ImageColor3 = theme:GetColor(Enum.StudioStyleGuideColor.MainText),
+				ImageColor3 = MainColor,
 				Position = (self.state.Hover and self.props.Layer.Id ~= 1 and (canGoUp or canGoDown)) and UDim2.new(1, -65, 0.5, 0) or UDim2.new(1, -40, 0.5, 0),
 				ScaleType = Enum.ScaleType.Fit,
 				Size = UDim2.new(0, 20, 0, 20),
