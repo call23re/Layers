@@ -22,6 +22,7 @@ function App:init()
 	self:setState({
 		Layers = Layers.Stack,
 		SelectedLayerId = 1,
+		Enabled = true,
 		CreatingLayer = false,
 		EditingLayer = false,
 		DeletingLayer = false,
@@ -192,7 +193,7 @@ function App:update(id)
 end
 
 function App:render()
-	local isModalActive = self.state.CreatingLayer or self.state.DeletingLayer
+	local isModalActive = self.state.CreatingLayer or self.state.DeletingLayer or (not self.state.Enabled)
 	local selectedLayerName = Layers.Stack[self.state.SelectedLayerId].Name
 	local selectedLayerTransparency = Layers.Stack[self.state.SelectedLayerId].Properties.Transparency
 
@@ -290,8 +291,26 @@ function App:render()
 					FillDirection = Enum.FillDirection.Horizontal,
 					Padding = UDim.new(0, 6),
 				}),
-				Create = Roact.createElement(MainButton, {
+				ActiveToggle = Roact.createElement(Button, {
 					LayoutOrder = 0,
+					Size = UDim2.new(0, 28, 1, 0),
+					Text = "",
+					OnActivated = function()
+						self:setState({ Enabled = not self.state.Enabled })
+						Layers:SetEnabled(self.state.Enabled)
+					end,
+				}, {
+					Icon = Roact.createElement("ImageLabel", {
+						AnchorPoint = Vector2.new(0.5, 0.5),
+						Position = UDim2.fromScale(0.5, 0.5),
+						Size = UDim2.fromOffset(16, 16),
+						BackgroundTransparency = 1,
+						Image = "rbxassetid://8656897374",
+						ImageColor3 = settings().Studio.theme:GetColor(Enum.StudioStyleGuideColor.MainText)
+					}),
+				}),
+				Create = Roact.createElement(MainButton, {
+					LayoutOrder = 1,
 					Size = UDim2.new(0, 28, 1, 0),
 					Text = "",
 					OnActivated = function()
@@ -309,7 +328,7 @@ function App:render()
 					}),
 				}),
 				Delete = Roact.createElement(Button, {
-					LayoutOrder = 1,
+					LayoutOrder = 2,
 					Size = UDim2.new(0, 28, 1, 0),
 					Text = "",
 					OnActivated = function()
@@ -328,8 +347,8 @@ function App:render()
 					}),
 				}),
 				Edit = Roact.createElement(Button, {
-					LayoutOrder = 2,
-					Size = UDim2.new(0.3, -18, 1, 0),
+					LayoutOrder = 3,
+					Size = UDim2.new(0.3, -28, 1, 0),
 					Text = "Edit",
 					OnActivated = function()
 						--Layers.saveTransparency(self.state.SelectedLayerId)
@@ -338,13 +357,16 @@ function App:render()
 					Disabled = isModalActive
 				}),
 				Move = Roact.createElement(Move, {
+					LayoutOrder = 4,
+					Size = UDim2.new(0.3, -28, 1, 0),
+					Disabled = not self.state.Enabled,
 					BatchSetLayer = function(targets)
 						self.batchSetLayer(targets, self.state.SelectedLayerId)
 					end
 				}),
 				Select = Roact.createElement(Button, {
-					LayoutOrder = 4,
-					Size = UDim2.new(0.3, -18, 1, 0),
+					LayoutOrder = 5,
+					Size = UDim2.new(0.3, -28, 1, 0),
 					Text = "Select All",
 					OnActivated = self.updateSelection,
 					Disabled = isModalActive
