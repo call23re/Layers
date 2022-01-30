@@ -15,6 +15,11 @@ Util.ValidSelection = function(instances)
 			return false
 		end
 
+		-- It is not unusual for plugins to store visual indicators in the camera. This plugin tends to interfere with them.
+		if instance:IsDescendantOf(workspace.Camera) then
+			return false
+		end
+
 		for _, baseType in pairs(Constants.ValidInstances) do
 			if instance:IsA(baseType) then
 				return true
