@@ -86,17 +86,15 @@ function Layers:_UpdateChildren(layerId, property)
 		ChangeHistoryService:SetWaypoint("_editLayers" .. tick())
 		for instance, child in pairs(layer.Children) do
 
-			if property == "Visible" then
+			if instance.Parent == nil or CollectionService:HasTag(instance, "_layered") == false then
+				self:RemoveChild(layerId, instance)
+			elseif property == "Visible" then
 				if layer.Properties.Visible == false then
 
 					makeParentFolder()
 
-					if instance.Parent == nil then
-						self:RemoveChild(layerId, instance)
-					else
-						child.Properties.Parent = instance.Parent
-						instance.Parent = ParentFolder
-					end
+					child.Properties.Parent = instance.Parent
+					instance.Parent = ParentFolder
 
 				elseif layer.Properties.Visible == true then
 
@@ -116,12 +114,13 @@ function Layers:_UpdateChildren(layerId, property)
 						ParentFolder:Destroy()
 					end
 				end
-			end
-			
-			if instance:IsA("BasePart") then
-				instance.Locked = layer.Properties.Locked 
-				--instance.Transparency = (layer.Properties.Visible and child.Properties.Transparency or 1)
-				--instance.Anchored = (layer.Properties.Visible and child.Properties.Anchored or true)
+			elseif property == "Locked" then
+				if instance:IsA("BasePart") then
+					if layer.Properties.Locked then
+						child.Properties.Locked = instance.Locked
+					end
+					instance.Locked = child.Properties.Locked or layer.Properties.Locked
+				end
 			end
 
 			self:_UpdateTag(child)
@@ -146,13 +145,9 @@ end
 -- Public
 function Layers:AddChild(layerId, instance)
 	
-	-- only parts _for now_
 	if not Util.ValidSelection({instance}) then
 		return false
 	end
-	--[[if not instance:IsA("BasePart") then
-		return false
-	end]]
 	
 	local layer = self.Stack[layerId]
 	
@@ -181,7 +176,7 @@ function Layers:AddChild(layerId, instance)
 		end
 
 		if instance:IsA("BasePart") then
-			instance.Locked = layer.Properties.Locked 
+			instance.Locked = instance.Locked or layer.Properties.Locked
 			--instance.Transparency = (layer.Properties.Visible and instance.Transparency or 1)
 			--instance.Anchored = (layer.Properties.Visible and instance.Anchored or true)
 		end
@@ -464,7 +459,7 @@ function Layers:Init()
 		end)
 
 		-- if destroyed parts aren't removed, you get weird Selection related issues
-		-- also keeping references to destroyed parts could potentially lead to memory leaks
+		-- also keeping references to destroyed parts causes memory leaks
 		workspace.DescendantRemoving:Connect(function(child)
 			if self.Lookup[child] then
 				if child.Parent == nil then
