@@ -62,11 +62,15 @@ function Move:render()
 		end
 	end
 
+	if self.props.Disabled then
+		valid = false
+	end
+
 	return Roact.createElement(Button, {
-		LayoutOrder = 3,
-		Size = UDim2.new(0.3, -18, 1, 0),
+		LayoutOrder = self.props.LayoutOrder,
+		Size = self.props.Size,
 		Text = "Move",
-		Disabled = self.props.Disabled or not valid,
+		Disabled = not valid,
 		OnActivated = self.onActivated,
 	})
 end
