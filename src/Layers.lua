@@ -210,7 +210,6 @@ function Layers:ResetChild(instance)
 	
 	if Child then
 		-- reset properties
-		--instance.Anchored = Child.Properties.Anchored
 		if instance:IsA("BasePart") then
 			instance.Locked = Child.Properties.Locked
 		end
@@ -281,7 +280,7 @@ function Layers:Edit(layerId, newProperties)
 		end
 
 		for key, value in pairs(newProperties) do
-			if layer.Properties[key] then
+			if layer.Properties[key] ~= nil then
 				layer.Properties[key] = value
 			end
 		end
